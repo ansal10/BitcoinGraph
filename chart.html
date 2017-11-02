@@ -7,7 +7,7 @@
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript">
-  setTimeout(function () { location.reload(true); }, 30000);
+  setTimeout(function () { location.reload(true); }, 15000);
 </script>
 <body>
 
@@ -20,7 +20,7 @@
 <script>
     $(function () {
 
-    var visible_graphs = ['zebpay-buys', 'bci-sells', 'zebpay-sells', 'bci-buys', 'coinbase-buys'];
+    var visible_graphs = ['zebpay-buys', 'bci-sells', 'zebpay-sells', 'bci-buys', 'coinbase-buys', 'coinsecure-buys'];
     function readData() {
         return $.ajax({
             type: "GET",

@@ -6,94 +6,102 @@
 </head>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 <script type="text/javascript">
-  setTimeout(function () { location.reload(true); }, 60000);
+//  setTimeout(function () { location.reload(true); }, 15000);
 </script>
 <script src="moment.js"></script>
 <body>
 
-<div style="text-align: center; font-size: 52px; " id="difference"></div>
+<div ng-app="myApp" ng-controller="myCtrl" >
+    <span style="align-content: center">StartTime</span>
+    <span>EndTime</span>
+    <div id="container" style="width:100%; height:800px;"></div>
 
-<div id="container" style="width:100%; height:800px;"></div>
+</div>
 
 </body>
 
 <script>
     $(function () {
 
-    var visible_graphs = ['zebpay-buys', 'bci-sells'];
-    function readData() {
-        return $.ajax({
-            type: "GET",
-            url: 'data2.txt',
-            async: false
-        }).responseText;
-    }
 
-    var data = readData();
-    data = JSON.parse(data);
-
-    var chartData = {
-        chart: {
-            type: 'spline'
-        },
-        title: {
-            text: 'Bitcoin Prices'
-        },
-        xAxis: {
-            categories: []
-        },
-        yAxis: {
-            title: {
-                text: 'Fruit eaten'
-            }
-        },
-        series: []
-    };
-    draftChart(data, 0, 1);
-
-
-
-
-
-    function getDatas( datas, since_days, interval_days ) {
-        var startDate = moment(moment().subtract(since_days, 'd').format('DD-MM-YYYY'), 'DD-MM-YYYY').toDate();
-        var endDate = moment(moment().subtract(since_days, 'd').add(interval_days, 'd').format('DD-MM-YYYY'), 'DD-MM-YYYY').toDate();
-        var new_datas = [];
-        for (var i = 0 ; i < datas.length;  i++){
-            var d_time = moment(datas[i].time);
-            if (d_time >= startDate && d_time < endDate)
-                new_datas.push(datas[i].price);
-        }
-        return new_datas.slice(new_datas.length-100, new_datas.length);
-    }
-
-    function draftChart(data, since_days, interval) {
-        chartData.series = [];
-
-
-        for(var wallet in data.data){
-        for(var price_type in data.data[wallet]){
-            var name = wallet + '-' + price_type;
-            var datas =data.data[wallet][price_type];
-            var visible = visible_graphs.indexOf(name) >= 0;
-            chartData.series.push({
-                name: name,
-                data: getDatas(datas, 0, 1 ),
-                visible:visible
-                })
-            }
-        }
-
-        var zb_buys =  data.data['zebpay']['buys'][data.data['zebpay']['buys'].length - 1].price;
-        var bc_sells = data.data['bci']['sells'][data.data['bci']['sells'].length - 1].price;
-        var diff = bc_sells - zb_buys;
-        document.getElementById("difference").innerHTML = diff;
-
-
-
-        Highcharts.chart('container', chartData);
-    }
 });
+</script>
+
+<script>
+    var app = angular.module('myApp', []);
+    app.controller('myCtrl', function($scope) {
+
+        var colors = {
+            zebpay: "#3498DB",
+            bci: "#F4D03F",
+            coinbase: "#000000",
+            coinsecure: "#CB4335"
+        };
+        var visible_graphs = ['zebpay-buy', 'bci-sells', 'zebpay-sells', 'bci-buy', 'coinsecure-buy', 'coinsecure-sells', 'coinbase-buy'];
+        function readData() {
+            return $.ajax({
+                type: "GET",
+                url: 'data.json',
+                async: false
+            }).responseText;
+        }
+
+        var data = readData();
+        data = JSON.parse(data);
+
+        var chartData = {
+            chart: {
+                type: 'spline'
+            },
+            title: {
+                text: 'Bitcoin Prices'
+            },
+            xAxis: {
+                categories: []
+            },
+            yAxis: {
+                title: {
+                    text: 'Fruit eaten'
+                }
+            },
+            series: []
+        };
+        draftChart(data, moment().subtract(2, 'hours'), moment().add(1, 'minutes'));
+
+
+
+
+
+        function getDatas( datas, from, to) {
+           var data =  _.select(datas, function (price_data) {
+                var timestmap =  moment(price_data.timestamp);
+                return (timestmap >= from && timestmap <= to)
+            }).map(function(price_data){
+                return price_data.price;
+            })
+            return data;
+        }
+
+        function draftChart(data, from, to) {
+            chartData.series = [];
+            for(var wallet in data){
+                for(var price_type in data[wallet]){
+                    var name = wallet + '-' + price_type;
+                    var datas =data[wallet][price_type];
+                    var visible = visible_graphs.indexOf(name) >= 0;
+                    chartData.series.push({
+                        color: colors[wallet],
+                        name: name,
+                        data: getDatas(datas,  from, to ),
+                        visible:visible
+                    })
+                }
+            }
+            Highcharts.chart('container', chartData);
+        }
+    });
 </script>
 </html>
